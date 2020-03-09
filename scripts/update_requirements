@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+ROOT_PATH=$(git rev-parse --show-toplevel)
+
+docker-compose run --rm \
+    api \
+    pip-compile --upgrade --verbose
+
+mv -f ${ROOT_PATH}/src/requirements.txt ${ROOT_PATH}/requirements.txt

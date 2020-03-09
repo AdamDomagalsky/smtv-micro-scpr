@@ -1,0 +1,47 @@
+version: '3.7'
+
+services:
+  api-postgres:
+    image: postgres:12
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+
+  api:
+    image: smtv-api:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: smtv-api
+    command: /wait-for-it.sh api-postgres:5432 -- bash -c "sleep 1; migrate && check_environment && start_service"
+    restart: always
+    env_file:
+      - services-variables.env
+    ports:
+      - 81:80
+    depends_on:
+      - api-postgres
+      - localstack
+    volumes:
+      - ./src:/srv
+
+  redis:
+    hostname: redis
+    image: redis:5.0.7
+    ports:
+      - 6379:6379
+
+  localstack:
+    image: localstack/localstack:latest
+    restart: always
+    ports:
+      - 4572:4572
+      - 18888:8888
+    environment:
+      - SERVICES=s3
+      - PORT_WEB_UI=8888
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - /tmp/localstack

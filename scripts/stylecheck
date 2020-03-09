@@ -1,0 +1,16 @@
+#!/bin/bash -e
+
+ROOT_PATH=$(git rev-parse --show-toplevel)
+
+docker run --rm \
+    --net=none \
+    -v ${ROOT_PATH}/src:/srv \
+    crs-ai-api:dev \
+    flake8 $@
+
+docker run --rm \
+    --net=none \
+    -v ${ROOT_PATH}/src:/srv \
+    -v ${ROOT_PATH}/kube:/srv/kube \
+    crs-ai-api:dev \
+    flake8 $@

@@ -1,0 +1,12 @@
+alembic
+boto3
+factory_boy
+flask
+flask-restplus
+flask-sqlalchemy
+pytest
+pytest-flask-sqlalchemy
+requests
+sqlalchemy[postgresql_psycopg2binary]
+uwsgi
+redis

@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+ROOT_PATH=$(git rev-parse --show-toplevel)
+
+docker run --rm \
+    --net=none \
+    -v ${ROOT_PATH}/src:/srv \
+    crs-ai-api:dev \
+    mypy --package smtv_api $@
