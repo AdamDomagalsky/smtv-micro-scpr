@@ -1,7 +1,7 @@
 import logging
 import uuid
 from typing import Any
-
+import re
 import flask_restplus
 from smtv_api import models
 from smtv_api import settings
@@ -27,6 +27,34 @@ class UUID4(fields.String):
 
 
 S3_PATH_PATTERN = r's3://([^/]+)(/.*)?'
+DJANGO_URL_VALIDATION_REGEX = re.compile(
+        r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'localhost|' #localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+
+SCRAPE_URL = flask_restplus.Model('ScrapeUrl',{
+    'scrapeID': UUID4(readonly=True, attribute='id'),
+    'url': fields.String(
+        required=True,
+        pattern=DJANGO_URL_VALIDATION_REGEX.pattern,
+        description='Valid URLs: HTTP, HTTPS & FTP. Rest prefx is malformed'),
+    'scrapeText': fields.Boolean(default=True, attribute='scrape_text'),
+    'scrapeImages': fields.Boolean(default=True, attribute='scrape_images'),
+    'status': fields.String(
+        enum=[status.value for status in models.ScrapeTaskStatus],
+        readonly=True,
+        attribute=lambda x: x.status.value),
+    'createTime': fields.DateTime(readonly=True, allow_null=True, attribute='created_at'),
+    'startDate': fields.DateTime(readonly=True, allow_null=True, attribute='start_date'),
+    'endTime': fields.DateTime(readonly=True, allow_null=True, attribute='end_time'),
+    'errorMessage': fields.String(readonly=True, allow_null=True, attribute='error_message'),
+    'downloadLink': fields.String(readonly=True, allow_null=True, attribute='download_link'),
+})
+
 
 def init_schemas(api: flask_restplus.Api) -> None:
     for _, value in globals().items():

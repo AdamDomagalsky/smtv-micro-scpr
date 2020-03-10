@@ -98,5 +98,9 @@ class ModelRepository(abc.ABC):
             )
         return objects_
 
+class ScrapeTaskStatusRepository(ModelRepository):
+    model = models.ScrapeTask
+
+
 class RepositoryError(Exception):
     pass
