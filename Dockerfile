@@ -18,3 +18,12 @@ RUN pip install --no-deps --editable .
 RUN mv smtv_api.egg-info /usr/local/lib/python3.7/site-packages
 
 CMD ["start_service"]
+
+# Celery worker
+FROM smtv-api as smtv-worker-celery
+
+COPY celery-requirements.txt /srv/celery-requirements.txt
+RUN pip install -r celery-requirements.txt
+
+ENTRYPOINT [ "celery" ]
+CMD [ "-A tasks worker" ]

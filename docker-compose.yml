@@ -1,14 +1,6 @@
 version: '3.7'
-
+# TO SCALE WORKERs docker-compose scale celery_worker_default=5
 services:
-  api-postgres:
-    image: postgres:12
-    restart: unless-stopped
-    environment:
-      - POSTGRES_PASSWORD=postgres
-    ports:
-      - 5432:5432
-
   api:
     image: smtv-api:dev
     build:
@@ -26,6 +18,56 @@ services:
       - localstack
     volumes:
       - ./src:/srv
+
+  celery_worker_template: &celery_worker_template # anchor to reuse dev/prod
+    image: smtv-worker-celery
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: smtv-worker-celery
+    env_file:
+      - services-variables.env
+    entrypoint: celery
+    # command: -A tasks worker --loglevel=debug
+    volumes:
+      - ./src:/srv
+      - ./fstorage:/fstorage # TODO remove after integrated with S3
+    links:
+      - redis
+      - api-postgres
+    depends_on:
+      - redis
+      - api-postgres # in'n'out to pg
+
+  # DEV celery with code reloading
+  celery_worker_default:
+    <<: *celery_worker_template
+    # entrypoint: bash -c "sleep 3600"
+    entrypoint: watchmedo
+    command: auto-restart --directory=./ --pattern=*.py --recursive -- celery -A tasks worker --loglevel=debug -n default-worker@%h --workdir /srv/smtv_api/celery_service/
+
+
+  # PROD-like without code reloading
+  # celery_worker:
+  #   <<: *celery_worker_template
+  #   entrypoint: celery
+  #   command: -A <module-name> worker --loglevel=debug
+  #   restart: always
+
+  flower:
+    <<: *celery_worker_template
+    command: -A tasks flower --port=5555 --workdir /srv/smtv_api/celery_service/
+    ports: 
+      - 5555:5555
+
+# Rest of svcs - db, cache, fs
+  api-postgres:
+    image: postgres:12
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
 
   redis:
     hostname: redis

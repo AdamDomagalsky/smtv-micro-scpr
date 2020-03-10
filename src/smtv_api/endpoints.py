@@ -39,9 +39,17 @@ class ScrapeUrl(flask_restplus.Resource):
     def post(self) -> Tuple[models.ScrapeTask, http.HTTPStatus]:
         payload = helpers.get_payload(schemas.SCRAPE_URL)
 
-
         scrape_repository = repositories.ScrapeTaskStatusRepository()
         scrape_task: models.ScrapeTask = scrape_repository.create(payload)
+
+        # TODO celery run here
+
+
+
+
+
+
+
 
         return scrape_task, http.HTTPStatus.CREATED
 
@@ -91,4 +99,19 @@ class CheckScrape(flask_restplus.Resource):
 
 
         return scrape_task, ret_http_status
+
+# TMP to test celery connection
+from smtv_api.celery_service.tasks import add_together
+@api.route('/add')
+class AddTgther(flask_restplus.Resource):
+    def get(self) -> Tuple[Dict[str, Any], http.HTTPStatus]:
+        payload = flask.request.json
+        a = payload.get("a", 1)
+        b = payload.get("b", 1)
+        result = add_together.delay(a, b)
+        # https://github.com/celery/celery/pull/5931 ISSUE ... downgrade celery 4.4.1 to 4.4.0
+        return {
+            'result': result.wait(),
+            'given': flask.request.json
+        }, http.HTTPStatus.OK
 
