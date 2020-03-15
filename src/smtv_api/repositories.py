@@ -98,7 +98,7 @@ class ModelRepository(abc.ABC):
             )
         return objects_
 
-class ScrapeTaskStatusRepository(ModelRepository):
+class ScrapeTaskRepository(ModelRepository):
     model = models.ScrapeTask
 
 

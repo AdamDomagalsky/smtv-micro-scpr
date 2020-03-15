@@ -11,6 +11,7 @@ from smtv_api import models
 from smtv_api import repositories
 from smtv_api import schemas
 from smtv_api import helpers
+from smtv_api.celery_service import tasks as celery_tasks
 
 from flask_sqlalchemy import BaseQuery
 
@@ -26,6 +27,28 @@ api: flask_restplus.Api = flask_restplus.Api(
     title="Title",
     description="DESC")
 
+def check_head_url_exist(url):
+    try:
+        import httplib2
+        h = httplib2.Http()
+        resp = h.request(url, 'HEAD')
+        reutrn_code = int(resp[0]['status'])
+
+        if reutrn_code >= 400:
+            if reutrn_code == 403:
+                return
+            helpers.error_abort(
+                    code=http.HTTPStatus.BAD_REQUEST,
+                    message = f'Given url does not exist or some problem occured getting.'
+                    f' Got code:{reutrn_code} when HEAD {url}'
+                )
+
+    except (httplib2.ServerNotFoundError, OSError):
+        helpers.error_abort(
+                code=http.HTTPStatus.BAD_REQUEST,
+                message = f'Given url does not exist: {url}'
+            )
+
 
 @api.route('/scrape')
 class ScrapeUrl(flask_restplus.Resource):
@@ -39,17 +62,24 @@ class ScrapeUrl(flask_restplus.Resource):
     def post(self) -> Tuple[models.ScrapeTask, http.HTTPStatus]:
         payload = helpers.get_payload(schemas.SCRAPE_URL)
 
-        scrape_repository = repositories.ScrapeTaskStatusRepository()
+        if not payload['scrape_text'] and not payload['scrape_images']:
+            helpers.error_abort(
+                code=http.HTTPStatus.NOT_ACCEPTABLE,
+                message = 'No effect of the task - at least one of scrape text or images have to be True'
+            )
+
+        check_head_url_exist(payload['url'])
+
+
+        scrape_repository = repositories.ScrapeTaskRepository()
         scrape_task: models.ScrapeTask = scrape_repository.create(payload)
 
-        # TODO celery run here
+        result = celery_tasks.scrape_url.delay(id = scrape_task.id)
 
-
-
-
-
-
-
+        # helpers.error_abort(
+        #     code=http.HTTPStatus.NOT_IMPLEMENTED,
+        #     message= result.wait()
+        # )
 
         return scrape_task, http.HTTPStatus.CREATED
 
@@ -67,7 +97,7 @@ class CheckScrape(flask_restplus.Resource):
     )
     @api.doc(params={'id': 'scrape task id from POST /scrape'})
     def get(self, id: uuid.UUID) -> Tuple[models.ScrapeTask, http.HTTPStatus]:
-        scrape_repository = repositories.ScrapeTaskStatusRepository()
+        scrape_repository = repositories.ScrapeTaskRepository()
         scrape_task: models.ScrapeTask = scrape_repository.get(id)
         return scrape_task, http.HTTPStatus.OK
 
@@ -90,7 +120,7 @@ class CheckScrape(flask_restplus.Resource):
     )
     @api.doc(params={'id': 'scrape task id from POST /scrape'})
     def get(self, id: uuid.UUID) -> Tuple[models.ScrapeTask, http.HTTPStatus]:
-        scrape_repository = repositories.ScrapeTaskStatusRepository()
+        scrape_repository = repositories.ScrapeTaskRepository()
         scrape_task: models.ScrapeTask = scrape_repository.get(id)
 
         ret_http_status = http.HTTPStatus.OK
@@ -101,17 +131,19 @@ class CheckScrape(flask_restplus.Resource):
         return scrape_task, ret_http_status
 
 # TMP to test celery connection
-from smtv_api.celery_service.tasks import add_together
 @api.route('/add')
 class AddTgther(flask_restplus.Resource):
     def get(self) -> Tuple[Dict[str, Any], http.HTTPStatus]:
         payload = flask.request.json
-        a = payload.get("a", 1)
-        b = payload.get("b", 1)
-        result = add_together.delay(a, b)
+        a = b = 1
+        if payload:
+            a = payload.get("a", 1)
+            b = payload.get("b", 1)
+        result = celery_tasks.add_together.delay(a, b)
         # https://github.com/celery/celery/pull/5931 ISSUE ... downgrade celery 4.4.1 to 4.4.0
         return {
-            'result': result.wait(),
-            'given': flask.request.json
+            'a+b=': result.wait(),
+            'a': a,
+            'b': b
         }, http.HTTPStatus.OK
 

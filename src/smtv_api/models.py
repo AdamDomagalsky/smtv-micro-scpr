@@ -25,10 +25,6 @@ Base = declarative_base()
 class ScrapeTaskStatus(enum.Enum):
     PENDING = 'PENDING'
     RUNNING = 'RUNNING'
-    PENDING_PLAIN_CELERY = 'PENDING_PLAIN_CELERY'
-    RUNNING_PLAIN_CELERY = 'RUNNING_PLAIN_CELERY'
-    FAILED_PLAIN_CELERY = 'FAILED_PLAIN_CELERY'
-    DISPATCH = 'DISPATCH'
     COMPLETED = 'COMPLETED'
     FAILED = 'FAILED'
 
@@ -46,3 +42,23 @@ class ScrapeTask(database.db.Model):
     status = sa.Column(sa.Enum(ScrapeTaskStatus), default=ScrapeTaskStatus.PENDING, nullable=False, index=True)
     error_message = sa.Column(sa.String(), nullable=True)
     download_link = sa.Column(sa.String(), nullable=True)
+
+    @classmethod
+    def update_status(cls, id, status: ScrapeTaskStatus, error_message = None):
+        from smtv_api.repositories import ScrapeTaskRepository
+
+        scrape_repository = ScrapeTaskRepository()
+        data = {
+            'status': status
+        }
+        if error_message:
+            data['error_message'] = error_message
+
+        updated_scrape_task = scrape_repository.update(
+            id = id,
+            data = data
+        )
+
+        return updated_scrape_task
+
+

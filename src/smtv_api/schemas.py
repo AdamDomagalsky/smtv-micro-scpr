@@ -27,6 +27,7 @@ class UUID4(fields.String):
 
 
 S3_PATH_PATTERN = r's3://([^/]+)(/.*)?'
+# TODO smthing doesnt work with flask resplus
 DJANGO_URL_VALIDATION_REGEX = re.compile(
         r'^(?:http|ftp)s?://' # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
@@ -39,8 +40,8 @@ DJANGO_URL_VALIDATION_REGEX = re.compile(
 SCRAPE_URL = flask_restplus.Model('ScrapeUrl',{
     'scrapeID': UUID4(readonly=True, attribute='id'),
     'url': fields.String(
-        required=True,
-        pattern=DJANGO_URL_VALIDATION_REGEX.pattern,
+        # required=True,
+        # pattern=DJANGO_URL_VALIDATION_REGEX.pattern,
         description='Valid URLs: HTTP, HTTPS & FTP. Rest prefx is malformed'),
     'scrapeText': fields.Boolean(default=True, attribute='scrape_text'),
     'scrapeImages': fields.Boolean(default=True, attribute='scrape_images'),
