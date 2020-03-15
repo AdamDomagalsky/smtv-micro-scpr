@@ -1,8 +1,8 @@
 """init_db
 
-Revision ID: 39f9eba34b61
+Revision ID: c82fe738ebb7
 Revises: 
-Create Date: 2020-03-10 20:03:28.748188
+Create Date: 2020-03-15 15:48:01.151889
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '39f9eba34b61'
+revision = 'c82fe738ebb7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -29,7 +29,7 @@ def upgrade():
     sa.Column('url', sa.String(), nullable=False),
     sa.Column('scrape_text', sa.Boolean(), nullable=True),
     sa.Column('scrape_images', sa.Boolean(), nullable=True),
-    sa.Column('status', sa.Enum('PENDING', 'RUNNING', 'PENDING_PLAIN_CELERY', 'RUNNING_PLAIN_CELERY', 'FAILED_PLAIN_CELERY', 'DISPATCH', 'COMPLETED', 'FAILED', name='scrapetaskstatus'), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'RUNNING', 'DISPATCH', 'COMPLETED', 'FAILED', name='scrapetaskstatus'), nullable=False),
     sa.Column('error_message', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
