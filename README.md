@@ -44,6 +44,15 @@ As a result of pipeline is a .tgz file with:
     - * - rest of files are all imges files (like png,jpeg, snv, gif etc.)
 
 
+#### Understanding scrape status
+
+There are 5 states of scrape task:
+- **PENDING** - when API registed scrape request
+- **RUNNING** - when Celery worker got PENDING task, and started to process this task
+- **DISPATCH** - when the results of **RUNNING** are in process of uploading to S3 blob storage 
+- **COMPLETED** - when task is finished without any issues and results on S3
+- **FAILED** - if task is failed (special field in db error_message)
+
 ### Updating requirements:
 In case of adding new dependencies to our project
 

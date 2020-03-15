@@ -23,33 +23,33 @@ def add_together(a: int, b: int) -> int:
 @celery.task(name='scrape_url')
 @TemporaryDirectory
 def scrape_url(*args, **kwargs):
-    # try:
-    st_id = kwargs.get('id', None)
-    if st_id is None:
-        raise Exception('The id is none - it shouldn\'t happend - # TODO debug and fix')
+    try:
+        st_id = kwargs.get('id', None)
+        if st_id is None:
+            raise Exception('The id is none - it shouldn\'t happend - # TODO debug and fix')
 
-    scrape_task: models.ScrapeTask = ScrapeTask.update_status(st_id, ScrapeTaskStatus.RUNNING)
+        scrape_task: models.ScrapeTask = ScrapeTask.update_status(st_id, ScrapeTaskStatus.RUNNING)
 
-    scraper = Scraper(
-        scrape_id = scrape_task.id,
-        scrape_text = scrape_task.scrape_text,
-        scrape_images = scrape_task.scrape_images
-    )
+        scraper = Scraper(
+            scrape_id = scrape_task.id,
+            scrape_text = scrape_task.scrape_text,
+            scrape_images = scrape_task.scrape_images
+        )
 
-    scraper.visit_url(scrape_task.url, 0)
+        scraper.visit_url(scrape_task.url, 0)
 
-    scrape_task = ScrapeTask.update_status(st_id, ScrapeTaskStatus.DISPATCH)
+        scrape_task = ScrapeTask.update_status(st_id, ScrapeTaskStatus.DISPATCH)
 
-    tar_name = f'{ROOT_FS}/{scrape_task.id}.tgz'
-    make_tarfile(tar_name, source_dir = os.getcwd())
-    storage_s3_service.s3_client.upload_file(tar_name, S3_BUCKET, f'{scrape_task.id}.tgz')
+        tar_name = f'{ROOT_FS}/{scrape_task.id}.tgz'
+        make_tarfile(tar_name, source_dir = os.getcwd())
+        storage_s3_service.s3_client.upload_file(tar_name, S3_BUCKET, f'{scrape_task.id}.tgz')
 
-    scrape_task = ScrapeTask.update_status(st_id, ScrapeTaskStatus.COMPLETED)
+        scrape_task = ScrapeTask.update_status(st_id, ScrapeTaskStatus.COMPLETED)
 
-    return str(scrape_task.id) + ' with status: ' + str(scrape_task.status.value)
+        return str(scrape_task.id) + ' with status: ' + str(scrape_task.status.value)
 
-    # except Exception as e:
-        # scrape_task = ScrapeTask.update_status(st_id, ScrapeTaskStatus.FAILED, error_message=str(e.__traceback__) + str(e))
+    except Exception as e:
+        scrape_task = ScrapeTask.update_status(st_id, ScrapeTaskStatus.FAILED, error_message=str(e))
 
 
 
