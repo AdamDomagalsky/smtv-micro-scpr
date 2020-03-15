@@ -1,0 +1,38 @@
+#!/bin/bash -e
+
+ROOT_PATH=$(git rev-parse --show-toplevel)
+POSTGRES_NAME="test-postgres"
+
+# rm rf if test postgres running
+# https://forums.docker.com/t/implement-no-run-if-empty-or-similar-feature-in-the-docker-command/47487
+docker ps -aq -f name=$POSTGRES_NAME | xargs --no-run-if-empty docker rm -f
+
+if [ -z $(docker ps --format "{{.Names}}" | grep test-postgres) ]; then
+    docker run -d \
+        -e POSTGRES_HOST_AUTH_METHOD=trust \
+        --name $POSTGRES_NAME \
+        --restart=always \
+        postgres:12
+
+    sleep 5
+
+    docker run --rm \
+        -e API_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres \
+        --env-file ${ROOT_PATH}/services-variables.env \
+        --link $POSTGRES_NAME:postgres \
+        -v ${ROOT_PATH}/src:/srv \
+        smtv-api:dev \
+        migrate
+fi
+
+docker run --rm \
+	-e API_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres \
+    --link $POSTGRES_NAME:postgres \
+    -v ${ROOT_PATH}/src:/srv \
+    smtv-api:dev \
+    pytest $@
+
+rv=$?
+docker stop $POSTGRES_NAME 1>/dev/null
+docker rm $POSTGRES_NAME 1>/dev/null
+exit $rv

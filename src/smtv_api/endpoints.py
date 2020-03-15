@@ -73,8 +73,8 @@ class ScrapeUrl(flask_restplus.Resource):
 
         scrape_repository = repositories.ScrapeTaskRepository()
         scrape_task: models.ScrapeTask = scrape_repository.create(payload)
-
-        result = celery_tasks.scrape_url.delay(id = scrape_task.id)
+        
+        result = celery_tasks.scrape_url.delay(id = str(scrape_task.id))
 
         # helpers.error_abort(
         #     code=http.HTTPStatus.NOT_IMPLEMENTED,

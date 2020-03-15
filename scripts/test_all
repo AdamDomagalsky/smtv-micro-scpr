@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+ROOT_PATH=$(git rev-parse --show-toplevel)
+
+${ROOT_PATH}/scripts/test || ERROR=1
+${ROOT_PATH}/scripts/typecheck || ERROR=1
+${ROOT_PATH}/scripts/stylecheck || ERROR=1
+${ROOT_PATH}/scripts/clean
+
+exit ${ERROR}
