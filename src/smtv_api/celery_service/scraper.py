@@ -5,8 +5,6 @@ try:
     from urlparse import urljoin
 except ImportError:
     from urllib.parse import urljoin
-ROOT_FS = '/fstorage'
-
 
 class Scraper:
     def __init__(self, scrape_id, scrape_text = True, scrape_images = False):
@@ -44,7 +42,7 @@ class Scraper:
             self.download_text(soup)
 
         # saving all urls visited to file
-        with open(f'{ROOT_FS}/{self.scrape_id}.urls_visited','w+') as f_urls:
+        with open(f'{self.scrape_id}.urls_visited','w+') as f_urls:
             urls = '\n'.join(self.visited)
             f_urls.write(urls)
 
@@ -53,13 +51,13 @@ class Scraper:
         local_filename = image_url.split('/')[-1].split("?")[0]
 
         r = self.session.get(image_url, stream=True, verify=False)
-        with open(f'{ROOT_FS}/{local_filename}', 'wb') as f:
+        with open(f'{local_filename}', 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
                 f.write(chunk)
 
 
     def download_text(self, soup):
-        with open(f'{ROOT_FS}/{self.scrape_id}.txt','w+') as f_txt:
+        with open(f'{self.scrape_id}.txt','w+') as f_txt:
 
             # kill all script and style elements
             for script in soup(["script", "style"]):

@@ -51,7 +51,7 @@ SCRAPE_URL = flask_restplus.Model('ScrapeUrl',{
         attribute=lambda x: x.status.value),
     'createTime': fields.DateTime(readonly=True, allow_null=True, attribute='created_at'),
     'startDate': fields.DateTime(readonly=True, allow_null=True, attribute='start_date'),
-    'endTime': fields.DateTime(readonly=True, allow_null=True, attribute='end_time'),
+    'endTime': fields.DateTime(readonly=True, allow_null=True, attribute='ended_at'),
     'errorMessage': fields.String(readonly=True, allow_null=True, attribute='error_message'),
     'downloadLink': fields.String(readonly=True, allow_null=True, attribute='download_link'),
 })

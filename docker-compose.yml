@@ -86,4 +86,4 @@ services:
       - PORT_WEB_UI=8888
       - DATA_DIR=/tmp/localstack/data
     volumes:
-      - /tmp/localstack
+      - ./fstorage:/tmp/localstack

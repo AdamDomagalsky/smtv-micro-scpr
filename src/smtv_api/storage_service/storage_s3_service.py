@@ -7,7 +7,6 @@ import boto3
 import botocore
 
 from smtv_api import settings
-from smtv_api.storage_service import storage_abstract
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +20,3 @@ try:
 except Exception:
     logger.exception('s3_client connection error')
 
-
-class S3Service(storage_abstract.StorageServiceABC):
-
-    @classmethod
-    def get_object_url(cls, key_name: str, bucket_name: str) -> str:
-        raise NotImplementedError

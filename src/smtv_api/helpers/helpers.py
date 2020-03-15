@@ -107,22 +107,3 @@ def error_abort(code: http.HTTPStatus, message: str) -> None:
     flask_restplus.abort(code, error=error)
 
 
-def error_abort_with_error_message_dict(
-        code: http.HTTPStatus,
-        error_dict: typing.Any,
-        schema: flask_restplus.Model,
-        object: database.db.Model,
-        skip_none: bool = False) -> None:
-    _marshal_object = flask_restplus.marshal_with(schema, skip_none=skip_none)(lambda obj: obj)
-
-    marshaled_object = _marshal_object(object)
-    marshaled_object['errorMessage'] = error_dict
-
-    flask_restplus.abort(
-        make_response(
-            jsonify(
-                code=code,
-                message=marshaled_object
-            ),
-            code)
-    )
